@@ -1,3 +1,2 @@
-
-# token bot from botfather
-token_bot = ""
+# Token from Botfather
+TOKEN = ""

@@ -1,23 +1,27 @@
-# Tiktok Downloader
+# SocialMediaDownBot
+ 
 
-This is a repository for telegram bot tiktok downloader without watermark [TiktokVideoDownloaderIDBot](https://t.me/TiktokVideoDownloaderIDBot)
+<img src='img/logo.png' alt='SocialMediaDownBot' height='150' /></a>
 
-but you can also use the module I have created 
-```
-# python
->> from tiktok_module import downloader
->>
->> dl = downloader.tiktok_downloader()
->> result = dl.musicaldown(url="https://tiktok.com/...",output_name="video.mp4")
->>
-```
+Semplice Bot Telegram per scaricare contenuti da:
+- Facebook Watch
+- Instagram Reel
+- TikTok
+- YouTube Shorts
 
-## How to run in local machine :
- 1. Create you own bot on [BotFather](https://t.me/BotFather)
- 2. Download or clone repository
- 3. Open folder repository
- 4. edit config.py, paste your token
- 5. Install module on requirements.txt<br>
-`python3 -m pip install -r requirements.txt`
- 6. Run file bot_polling.py<br>
-`python3 bot_polling.py`
+<a href='https://t.me/SocialMediaDownBot'><img src='img/telegram_badge.png' alt='Available on Telegram' height='60' /></a>
+
+
+Realizzato in Python tramite la libreria [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot).
+
+
+## Se questo progetto ti piace e/o vuoi sostenere i costi per mantenerlo attivo ##
+
+[![Donate](https://img.shields.io/badge/Dona-Paypal-blue.svg)](https://paypal.me/radeox)
+
+------------------------------------------------------------------------------------
+
+## Note ##
+
+#### A big thank  to [Akasakaid](https://github.com/akasakaid) for starting this project ####
+

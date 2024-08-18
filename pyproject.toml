@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "tiktokdownloader"
+version = "0.1.0"
+description = ""
+authors = ["Dawid Weglarz <dawid.weglarz95@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+moviepy = "^1.0.3"
+python-telegram-bot = "^13.14"
+beautifulsoup4 = "^4.11.1"
+pid = "^3.0.4"
+opencv-python = "^4.6.0.66"
+aiohttp = "^3.8.3"
+httpx = "^0.27.0"
+msgspec = "^0.18.6"
+flask = "^3.0.3"
+numpy = "1.26.4"
+yt-dlp = "2024.8.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

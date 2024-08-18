@@ -2,3 +2,11 @@ __pycache__/
 .vscode/*
 .env
 config.py
+*.mp4
+*.mp3
+*.m4a
+database.csv
+cache/
+backup.csv
+run_api.py
+templates/
