@@ -13,7 +13,7 @@ from instagram_module import InstagramDownloader
 from pid.decorator import pidfile
 from telegram import (InlineKeyboardButton, InlineKeyboardMarkup,
                       InlineQueryResultPhoto, InlineQueryResultVideo,
-                      InputMediaPhoto, InputMediaVideo, Update)
+                      InputMediaPhoto, InputMediaVideo, Update, InputMediaDocument)
 from telegram.ext import (CallbackQueryHandler, CommandHandler, Filters,
                           InlineQueryHandler, MessageHandler, Updater,
                           run_async)
@@ -92,14 +92,13 @@ def linkHandler(update: Update, _):
         inverted = True
 
     # Generate a random number, if it is 5 change the InlineKeyboardButton
-    if randrange(10) != 5:
-        keyboard = [[InlineKeyboardButton("🔗🌐", url=message_user)]]
-    else:
-        keyboard = [[InlineKeyboardButton("🧧", url='https://paypal.me/radeox'),
-                     InlineKeyboardButton("🔗🌐", url=message_user)
-
+    if randrange(10) < 5:
+        keyboard = [[InlineKeyboardButton("💲", url='https://paypal.me/fast0n'),
+                     InlineKeyboardButton("🔗", url=message_user)
                      ]]
-
+    else:
+        keyboard = [[InlineKeyboardButton("🔗", url=message_user)]]
+            
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     # TikTok Media
@@ -136,6 +135,37 @@ def linkHandler(update: Update, _):
                 video=url,
                 caption=filter_caption(name, caption, "TT"),
                 parse_mode="Markdown", reply_markup=reply_markup)
+            
+        elif type_link == 'media':
+
+            documents = []
+            # Invia le immagini come file
+            for i in range(0, len(url), 10):
+                for j in range(i, min(i + 10, len(url))):
+                    try:
+                        # Scarica l'immagine per inviarla come file
+                        response = requests.get(url[j])
+                        if response.status_code == 200:
+                            filename = f"image_{j+1}.jpg"
+                            documents.append(InputMediaDocument(response.content, filename=filename))
+                        else:
+                            print(f"Errore nel download dell'immagine: {url[j]} - Status code: {response.status_code}")
+                    except Exception as e:
+                        print(f"Errore nell'invio dell'immagine: {e}")
+
+                # Invia il gruppo di media solo se ci sono documenti da inviare
+                if documents:
+                    update.message.reply_media_group(media=documents)
+                    documents.clear()  # Pulisci la lista per il prossimo gruppo di documenti
+
+            if '' in caption: 
+                update.message.reply_text('Messaggio originale',quote=quote_message, reply_markup=reply_markup)
+            else:
+                update.message.reply_text(caption,quote=quote_message, reply_markup=reply_markup)
+            
+
+            
+            
         elif type_link == "error":
             update.message.reply_text(
                 quote=quote_message,
@@ -173,29 +203,34 @@ def linkHandler(update: Update, _):
             )
             
         elif type_link == 'media':
-            try:
-                media_group = []
-                for i in range(len(url)):
-                    if 'image' in url[i] or 'webp' in url[i]:
-                        media_type = InputMediaPhoto
-                    else:
-                        media_type = InputMediaVideo
-
-                    
-                    if i == 0:
-                        media_group.append(media_type(media=requests.get(url[i]).content, caption=filter_caption(
-                            name, caption, "TS"), parse_mode="Markdown"))
-                    else:
-                        media_group.append(media_type(media=requests.get(url[i]).content))
-            except:
-                pass
-
-            update.message.reply_media_group(
-                timeout=10000,
-                quote=quote_message,
-                media=media_group
-            )
             
+            documents = []
+            # Invia le immagini come file
+            for i in range(0, len(url), 10):
+                for j in range(i, min(i + 10, len(url))):
+                    try:
+                        # Scarica l'immagine per inviarla come file
+                        response = requests.get(url[j])
+                        if response.status_code == 200:
+                            if 'mp4' in url[j]:
+                                filename = f"image_{j+1}.mp4"
+                            else:
+                                filename = f"image_{j+1}.jpg"
+                                
+                            documents.append(InputMediaDocument(response.content, filename=filename))
+                        else:
+                            print(f"Errore nel download dell'immagine: {url[j]} - Status code: {response.status_code}")
+                    except Exception as e:
+                        print(f"Errore nell'invio dell'immagine: {e}")
+
+                # Invia il gruppo di media solo se ci sono documenti da inviare
+                if documents:
+                    update.message.reply_media_group(media=documents)
+                    documents.clear()  # Pulisci la lista per il prossimo gruppo di documenti
+
+            update.message.reply_text(caption,quote=quote_message, reply_markup=reply_markup)
+
+
         elif type_link == "error":
             update.message.reply_text(
                 quote=quote_message,
@@ -251,7 +286,7 @@ def linkHandler(update: Update, _):
         # Get video URL and send it
         dl_instagram = InstagramDownloader()
         url, caption, type_link = dl_instagram.get_url(message_user)
-
+        
         if type_link == 'photo':
             update.message.reply_photo(
                 quote=quote_message,
@@ -259,15 +294,56 @@ def linkHandler(update: Update, _):
                 caption=filter_caption(name, caption, "IG"),
                 parse_mode="Markdown", reply_markup=reply_markup
             )
+            
+        elif type_link == 'media':
+            documents = []
+            # Invia le immagini come file
+            for i in range(0, len(url), 10):
+                for j in range(i, min(i + 10, len(url))):
+                    try:
+                        # Scarica l'immagine per inviarla come file
+                        response = requests.get(url[j])
+                        if response.status_code == 200:
+                            if 'mp4' in url[j]:
+                                filename = f"image_{j+1}.mp4"
+                            else:
+                                filename = f"image_{j+1}.jpg"
+                                
+                            documents.append(InputMediaDocument(response.content, filename=filename))
+                        else:
+                            print(f"Errore nel download dell'immagine: {url[j]} - Status code: {response.status_code}")
+                    except Exception as e:
+                        print(f"Errore nell'invio dell'immagine: {e}")
+
+                # Invia il gruppo di media solo se ci sono documenti da inviare
+                if documents:
+                    update.message.reply_media_group(media=documents)
+                    documents.clear()  # Pulisci la lista per il prossimo gruppo di documenti
+
+            if '' in caption: 
+                update.message.reply_text('Messaggio originale',quote=quote_message, reply_markup=reply_markup)
+            else:
+                update.message.reply_text(caption,quote=quote_message, reply_markup=reply_markup)
+                
 
         elif type_link == 'url':
-            update.message.reply_video(
-                quote=quote_message,
-                video=url,
-                timeout=10000,
-                caption=filter_caption(name, caption, "IG"),
-                parse_mode="Markdown", reply_markup=reply_markup
-            )
+            
+            if '.jpg' in url or '.webp' in url:
+                update.message.reply_photo(
+                    quote=quote_message,
+                    photo=url,
+                    timeout=10000,
+                    caption=filter_caption(name, caption, "IG"),
+                    parse_mode="Markdown", reply_markup=reply_markup
+                )
+            else:
+                update.message.reply_video(
+                    quote=quote_message,
+                    video=url,
+                    timeout=10000,
+                    caption=filter_caption(name, caption, "IG"),
+                    parse_mode="Markdown", reply_markup=reply_markup
+                )
 
         elif type_link == 'mp4':
             clip = mp.VideoFileClip(url)
@@ -284,29 +360,7 @@ def linkHandler(update: Update, _):
             )
             delete_file(url)
 
-        elif type_link == 'album':
 
-            try:
-                media_group = []
-                for i in range(len(url)):
-                    if 'mp4' in url[i]:
-                        media_type = InputMediaVideo
-                    else:
-                        media_type = InputMediaPhoto
-
-                    if i == 0:
-                        media_group.append(media_type(media=url[i], caption=filter_caption(
-                            name, caption, "IG"), parse_mode="Markdown"))
-                    else:
-                        media_group.append(media_type(media=url[i]))
-            except:
-                pass
-
-            update.message.reply_media_group(
-                timeout=10000,
-                quote=quote_message,
-                media=media_group
-            )
 
         elif type_link == "error":
             update.message.reply_text(
@@ -314,7 +368,7 @@ def linkHandler(update: Update, _):
                 text="*Photo/Video not exists or private*\n\n",
                 parse_mode="Markdown", reply_markup=reply_markup
             )
-
+        
         # Delete old message
         if type_message == 0:
             update.message.delete()

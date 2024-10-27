@@ -9,90 +9,87 @@ class ThreadsDownloader:
         pass
 
     def get_url(self, url_threads):
+        retries = 0
+        url_threads = re.sub(r'\?.*$', '', url_threads)  # Rimuove query string dall'URL
 
-        payload = {
-            "action": "threads_action",
-            "threads": f"threads_video_url={url_threads}",
-        }
+        while retries < 5:
+            payload = {
+                "action": "threads_action",
+                "threads": f"threads_video_url={url_threads}",
+            }
 
-        headers = {
-            "origin": "https://videothreadsdownloader.com",
-            "referer": "https://videothreadsdownloader.com/threads-scaricatore-di-video-immagini-gif/",
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-            "x-requested-with": "XMLHttpRequest",
-        }
+            headers = {
+                "origin": "https://videothreadsdownloader.com",
+                "referer": "https://videothreadsdownloader.com/threads-scaricatore-di-video-immagini-gif/",
+                "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                "x-requested-with": "XMLHttpRequest",
+            }
 
-        response = requests.request(
-            "POST",
-            "https://videothreadsdownloader.com/wp-admin/admin-ajax.php",
-            headers=headers,
-            data=payload,
-        )
+            try:
+                response = requests.post(
+                    "https://videothreadsdownloader.com/wp-admin/admin-ajax.php",
+                    headers=headers,
+                    data=payload,
+                    timeout=10  # Timeout per evitare blocchi
+                )
+                data = response.json()
+            except requests.RequestException:
+                retries += 1
+                continue  # Riprova in caso di errore di rete
+            except ValueError:
+                return None, None, "error"  # Errore di parsing JSON
 
-        data = response.json()
+            # Gestione delle risposte HTTP
+            if data.get("code") == 200:
+                data_items = data.get("data", [])
+                caption = self.get_description(url_threads)
+                
+                video_not_found = False  # Questa variabile può essere definita in base alla logica
 
-        # print(data)
-        if data["success"]:
-            data_items = data["data"]
-            caption = self.get_description(url_threads)
+                if video_not_found:
+                    media_url = self.get_video(url_threads)
+                    return media_url, caption, "media"
 
-            video_not_found = False
-            for item in data_items:
-                if item["type"] == "Video" and item["type"] == "Image":
-                    if "url" not in item:
-                        video_not_found = True
-
-            if video_not_found:
-                media_url = self.get_video(url_threads, video_not_found)
-                return media_url, caption, "media"
-            else:
-                try:
-                    links = [item["url"] for item in data_items]
-                except:
-                    links = [item["url"] for item in data_items if "url" in item]
-
-                if len(links) == 0:
-                    media_url = self.get_video(url_threads, video_not_found)
-                    return media_url, caption, "url"
-
+                links = [item["url"] for item in data_items if "url" in item]
+                
+                
                 if len(links) == 1:
-                    if "image" in links[0]:
+                    if "jpg" in links[0] or "webp" in links[0]:
                         return requests.get(links[0]).content, caption, "photo"
                     else:
                         return requests.get(links[0]).content, caption, "url"
+
                 if len(links) > 1:
                     return links, caption, "media"
 
-        else:
-            return None, None, "error"
+            elif data.get("code") == 500:
+                retries += 1  # Incrementa i tentativi in caso di errore server
 
-    def get_video(self, url_threads, video_not_found):
+            else:
+                return None, None, "error"
 
+        return None, None, "error"  # Dopo 5 tentativi falliti
+
+    def get_video(self, url_threads):
         headers = {
             "origin": "https://sssthreads.pro",
             "referer": "https://sssthreads.pro/",
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
         }
 
-        response = requests.request(
-            "GET",
+        response = requests.get(
             f"https://api.threadsphotodownloader.com/v2/media?url={url_threads}",
             headers=headers,
         )
 
         data = response.json()
-        # print(data)
-
         url_media_array = []
-        if video_not_found:
-            if len(data["image_urls"]) == 1:
-                url_media_array.append(data["image_urls"][0])
-            url_media_array.append(data["video_urls"][0]["download_url"])
 
-            return url_media_array
-        else:
-            url_media = requests.get(data["video_urls"][0]["download_url"]).content
-            return url_media
+        if len(data["image_urls"]) == 1:
+            url_media_array.append(data["image_urls"][0])
+        url_media_array.append(data["video_urls"][0]["download_url"])
+
+        return url_media_array
 
     def get_description(self, url_threads):
         response = requests.get(url_threads)
@@ -104,7 +101,7 @@ class ThreadsDownloader:
         )
 
         if description_match:
-            description = html.unescape(description_match.group(1))
+            description = html.unescape(description_match.group(1)).replace("_", "\\_")
             return description
-        else:
-            return ""
+        
+        return ""  # Restituisce una stringa vuota se non trovata

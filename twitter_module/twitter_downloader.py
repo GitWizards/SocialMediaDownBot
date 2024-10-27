@@ -1,8 +1,6 @@
 
 import re
-
 import requests
-
 
 class TweetDownloader:
     def __init__(self):

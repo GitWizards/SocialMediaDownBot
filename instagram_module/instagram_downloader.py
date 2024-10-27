@@ -1,85 +1,106 @@
 import requests
 import re
-import json
-
 
 class InstagramDownloader:
 
     def __init__(self):
         pass
+    
+    
+    def get_media_data_by_media_id(self,video_id: str) -> tuple:
+        ig_query_url = "https://www.instagram.com/graphql/query"
 
-    def get_instagram_post_id(self, media_id: str):
-        post_id = ""
-        try:
-            # Split the mediaId by '_' and take the first part, then convert to integer
-            id = int(media_id.split("_")[0])
-            alphabet = (
-                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
-            )
-
-            while id > 0:
-                remainder = id % 64
-                id = id // 64  # Use floor division to ensure an integer result
-                post_id = alphabet[remainder] + post_id
-        except Exception as e:
-            print(e)
-
-        return post_id
-
-    """
-    def estrai_identificativo_da_link(self, link: str):
-        # Espressione regolare per identificare il tipo di link e estrarre l'identificativo
-        regex_stories = r"/stories/[^/]+/(\d+)/?$"
-        regex_reel = r"/reel/([^/?]+)/\??"
-        regex_post = r"/p/([^/?]+)/\??"
-
-        # Cerca corrispondenze nelle stringhe del link
-        match_stories = re.search(regex_stories, link)
-        match_reel = re.search(regex_reel, link)
-        match_post = re.search(regex_post, link)
-
-        # Se trova corrispondenze, restituisce l'identificativo corrispondente
-        if match_stories:
-            return self.get_instagram_post_id(match_stories.group(1))
-        elif match_reel:
-            return match_reel.group(1)
-        elif match_post:
-            return match_post.group(1)
-        else:
-            return None
-    """
-
-    def get_url(self, url: str):
-
-        payload = json.dumps({"url": f"{url}"})
-
-        link = "https://fastdl.app/api/convert"
-        headers = {
-            "accept": "application/json, text/plain, */*",
-            "accept-language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7,es;q=0.6,zh-CN;q=0.5,zh;q=0.4",
-            "content-type": "application/json",
-            "origin": "https://fastdl.app",
-            "priority": "u=1, i",
-            "referer": "https://fastdl.app/it",
-            "sec-ch-ua": '"Google Chrome";v="125", "Chromium";v="125", "Not.A/Brand";v="24"',
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        payload = {
+            "variables": '{"shortcode":"' + video_id + '"}',
+            "doc_id": "8845758582119845",
         }
 
-        try:
-            resp = requests.post(link, headers=headers, data=payload).json()
-            
-            if len(resp["url"]) >= 3:
-                download_link = resp["url"][1]["url"]
+        response = requests.post(ig_query_url, data=payload)
+        response_json = response.json()
+
+
+        if response_json.get("data", {}).get("xdt_shortcode_media"):
+            #media = response_json["data"]["xdt_shortcode_media"]
+            type_media = ''
+            document = []
+        
+            if not response_json["data"]["xdt_shortcode_media"].get("is_video", ""):
+                video_url = response_json["data"]["xdt_shortcode_media"].get("thumbnail_src", "")
+                type_media = "image"
             else:
-                download_link = resp["url"][0]["url"]
+                video_url = response_json["data"]["xdt_shortcode_media"].get("video_url", "")
+                type_media = "video"
                 
-            type_url = "url"
 
-            caption = resp["meta"]["title"]
-            if ".mp4" in caption or "stories" in caption:
-                caption = ""
+            if "video" in type_media:
+                video_url = response_json["data"]["xdt_shortcode_media"].get("video_url", "")
+            else:
+                video_url = response_json["data"]["xdt_shortcode_media"].get("thumbnail_src", "")
+                
+            try:
+                video_description = response_json["data"]["xdt_shortcode_media"]["edge_media_to_caption"]["edges"][0]["node"].get("text", "")
+            except IndexError:
+                video_description = ""
 
-            return download_link, caption, type_url
+            
+            try:
+                album = response_json["data"]["xdt_shortcode_media"]['edge_sidecar_to_children']['edges']
+                type_media = "album"
+                
+
+                for i in range(0, len(album)):
+                    document.append(response_json["data"]["xdt_shortcode_media"]['edge_sidecar_to_children']['edges'][i]['node']['display_url'])
+
+                return document, video_description, 'media'
+            except:
+                pass
+            
+
+            #video_duration = response_json["data"]["xdt_shortcode_media"].get("video_duration", 0)
+            
+            
+
+            return video_url, video_description, type_media
+
+        return "error", "error"
+
+    def get_video_id_from_url(self,url: str) -> str:
+        video_id_pattern = r"https:\/\/www\.instagram\.com(?:[_0-9a-z.\/]+)?\/reel\/(.+)\/"
+        match = re.search(video_id_pattern, url)
+        if match:
+            return match.group(1)  # Restituisce il primo ID video trovato
+        return ""  # Restituisce una stringa vuota se non trova match
+    
+    def get_photo_id_from_url(self,url: str) -> str:
+        photo_id_pattern = r"https:\/\/www\.instagram\.com(?:[_0-9a-z.\/]+)?\/p\/(.+)\/"
+        match = re.search(photo_id_pattern, url)
+        if match:
+            return match.group(1)  # Restituisce il primo ID video trovato
+        return ""  # Restituisce una stringa vuota se non trova match
+
+
+
+    def get_url(self, url: str):
+        
+        try:
+            
+            if 'reel' in url:
+                media_id = self.get_video_id_from_url(url)
+            else:
+                media_id = self.get_photo_id_from_url(url)
+                
+            
+                
+            #print(media_id)
+                
+            download_link, caption, type_media = self.get_media_data_by_media_id(media_id)
+            
+            if 'album' in type_media:
+                return download_link, caption, "url"
+            else:
+                return download_link, caption, "media"
+                
+                
         except:
-            print("Failed to open {}".format(link))
+    
             return None, None, "error"
