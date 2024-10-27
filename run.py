@@ -7,7 +7,7 @@ import requests
 from random import randrange
 import csv
 import moviepy.editor as mp
-from config import TOKEN
+from config import TOKEN, welcome_message
 from facebook_module import FacebookDownloader
 from instagram_module import InstagramDownloader
 from pid.decorator import pidfile
@@ -36,9 +36,7 @@ name_raw = ''
 
 def startHandler(update: Update, _):
     update.message.reply_text(
-        "Welcome to *Media Downloader Bot!*\n\n"
-        "Send me a link to download the media.\n"
-        "Supported sites:\n- TikTok\n- Instagram reels\n- Facebook\n- YouTube Shorts",
+        welcome_message,
         parse_mode="Markdown",
     )
 

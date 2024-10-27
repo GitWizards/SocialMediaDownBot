@@ -6,7 +6,10 @@
 Semplice Bot Telegram per scaricare contenuti da:
 - Facebook Watch
 - Instagram Reel
+- Pinterest
+- Threads
 - TikTok
+- X/Twitter
 - YouTube Shorts
 
 <a href='https://t.me/SocialMediaDownBot'><img src='img/telegram_badge.png' alt='Available on Telegram' height='60' /></a>
